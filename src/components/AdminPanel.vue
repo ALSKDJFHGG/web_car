@@ -124,9 +124,6 @@
           </div>
 
           <!-- 近期活动 表格等（略） -->
-            <div class="mb-8">
-              <UserMap :users="usersWithLocation" />
-            </div>
         </section>
 
         <!-- 管理页面占位：将使用独立组件 -->
@@ -263,20 +260,13 @@ import UserManagement from './UserManagement.vue'
 import QuestionManagement from './QuestionManagement.vue'
 import ExamConfig from './ExamConfig.vue'
 import LogManagement from './LogManagement.vue'
-import UserMap from './UserMap.vue'
 
 export default {
   name: 'AdminPanel',
-  components: { UserManagement, QuestionManagement, ExamConfig, LogManagement, UserMap },
+  components: { UserManagement, QuestionManagement, ExamConfig, LogManagement },
   data() {
     return {
       activePage: 'dashboard-page',
-      // 示例用户（包含经纬度）供地图展示；可与 UserManagement 同步或从后端拉取
-      usersWithLocation: [
-        { id: '100234', name: '张明', phone: '138****5678', role: '学员', lat: 31.2304, lng: 121.4737 },
-        { id: '100235', name: '李思', phone: '152****9012', role: '学员', lat: 30.5728, lng: 104.0668 },
-        { id: 'T1003', name: '王教练', phone: '139****3456', role: '教师', lat: 39.9042, lng: 116.4074 }
-      ],
       modalOpen: false,
       menuOpen: false,
       showProfileModal: false,

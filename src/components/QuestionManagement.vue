@@ -4,6 +4,22 @@
       <h1 class="text-2xl font-bold text-gray-800">试题管理</h1>
       <p class="text-gray-600">题目列表、添加/修改题目、导入题库</p>
     </div>
+    <!-- 批量删除确认模态 -->
+    <div v-if="showBulkDelete" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h3 class="font-semibold">确认批量删除</h3>
+          <button @click="showBulkDelete = false">×</button>
+        </div>
+        <div class="p-6">
+          <p class="mb-4">确认删除选中的 {{ selected.length }} 道试题？此操作不可恢复。</p>
+          <div class="flex justify-end space-x-3">
+            <button @click="showBulkDelete = false" class="px-4 py-2 border border-gray-300 rounded-lg">取消</button>
+            <button @click="doBulkDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg">确定删除</button>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <div class="flex justify-between mb-4">
       <div class="flex space-x-2">
@@ -30,6 +46,9 @@
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
+            <th class="px-4 py-3">
+              <input type="checkbox" @change="toggleSelectAll($event)" :checked="allVisibleSelected" />
+            </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">试题ID</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">题目内容</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">类型</th>
@@ -39,6 +58,9 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="q in paged" :key="q.id" class="table-row">
+            <td class="px-4 py-3">
+              <input type="checkbox" :value="q.id" v-model="selected" />
+            </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{q.id}}</td>
             <td class="px-6 py-4 text-sm text-gray-900 max-w-md truncate">{{q.text}}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{q.type}}</td>
@@ -50,6 +72,14 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- 批量操作工具栏 -->
+    <div v-if="selected.length > 0" class="mt-3 flex items-center justify-between bg-white p-3 rounded-lg shadow">
+      <div class="text-sm text-gray-700">已选择 {{ selected.length }} 道试题</div>
+      <div class="flex items-center space-x-2">
+        <button @click="confirmBulkDelete" class="px-3 py-1 bg-red-600 text-white rounded">批量删除</button>
+      </div>
     </div>
 
     <!-- modal -->
@@ -108,6 +138,9 @@ export default {
       showModal: false,
       editMode: false,
       form: { id: null, text: '', type: '单选题', subject: '科目一' }
+      ,
+      selected: [],
+      showBulkDelete: false
     }
   },
   computed: {
@@ -118,10 +151,35 @@ export default {
         return mq && mt
       })
     },
-    paged() { return this.filtered.slice((this.page-1)*this.perPage, this.page*this.perPage) }
+    paged() { return this.filtered.slice((this.page-1)*this.perPage, this.page*this.perPage) },
+    allVisibleSelected() {
+      if (!this.paged || this.paged.length === 0) return false
+      return this.paged.every(q => this.selected.includes(q.id))
+    }
   },
   methods: {
     search() { this.page = 1 },
+    toggleSelectAll(e) {
+      const checked = e.target.checked
+      const ids = this.paged.map(q => q.id)
+      if (checked) {
+        this.selected = Array.from(new Set(this.selected.concat(ids)))
+      } else {
+        this.selected = this.selected.filter(id => !ids.includes(id))
+      }
+    },
+    confirmBulkDelete() {
+      if (this.selected.length === 0) return
+      this.showBulkDelete = true
+    },
+    doBulkDelete() {
+      this.questions = this.questions.filter(q => !this.selected.includes(q.id))
+      this.selected = []
+      this.showBulkDelete = false
+      if (this.page > Math.max(1, Math.ceil(this.filtered.length / this.perPage))) {
+        this.page = Math.max(1, Math.ceil(this.filtered.length / this.perPage))
+      }
+    },
     openAdd() { this.editMode = false; this.form = { id: Date.now().toString().slice(-6), text: '', type: '单选题', subject: '科目一' }; this.showModal = true },
     edit(q) { this.editMode = true; this.form = Object.assign({}, q); this.showModal = true },
     closeModal() { this.showModal = false },
