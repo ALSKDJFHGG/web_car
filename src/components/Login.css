@@ -1,7 +1,8 @@
 :root {
-    --card-bg: #1c1c1c;
-    --card-border: rgba(255, 255, 255, 0.04);
-    --accent: #646cff
+    --card-bg: #ffffff;
+    --card-border: rgba(33, 53, 71, 0.06);
+    --accent: #2563eb;
+    --text-color: #213547;
 }
 
 .login-wrap {
@@ -17,8 +18,8 @@
     border: 1px solid var(--card-border);
     padding: 1.6rem;
     border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
-    color: inherit
+    box-shadow: 0 6px 20px rgba(16, 24, 40, 0.06);
+    color: var(--text-color);
 }
 
 .login-title {
@@ -48,9 +49,9 @@
     width: 100%;
     padding: 0.6rem 0.75rem;
     border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    background: transparent;
-    color: inherit;
+    border: 1px solid var(--card-border);
+    background: #fff;
+    color: var(--text-color);
     font-size: 0.95rem
 }
 
@@ -75,7 +76,7 @@
 }
 
 .btn {
-    background: linear-gradient(180deg, var(--accent), #535bf2);
+    background: linear-gradient(180deg, var(--accent), #1e40af);
     color: #fff;
     border: none;
     padding: 0.6rem 1rem;
@@ -96,22 +97,23 @@
 
 .login-success {
     padding: 2rem;
-    background: linear-gradient(180deg, #0f1720, #101216);
+    background: linear-gradient(180deg, #f0fff4, #e6ffed);
     border-radius: 12px;
-    color: #d1ffd6
+    color: #0b6623;
 }
 
-@media (prefers-color-scheme: light) {
+@media (prefers-color-scheme: dark) {
     :root {
-        --card-bg: #ffffff;
-        color: #223
+        --card-bg: #0f1720;
+        --card-border: rgba(255,255,255,0.04);
+        --text-color: #e6eef8;
     }
 
     .login-card {
-        border: 1px solid rgba(33, 53, 71, 0.06)
+        border: 1px solid var(--card-border);
+        background: var(--card-bg);
+        color: var(--text-color);
     }
 
-    .login-success {
-        color: #0b6623
-    }
+    .field input { background: rgba(255,255,255,0.04); color: var(--text-color); border-color: rgba(255,255,255,0.06); }
 }
