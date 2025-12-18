@@ -183,11 +183,11 @@
     <!-- 个人中心模态 -->
     <transition name="scale-fade">
       <div v-if="showProfileModal" class="fixed inset-0 bg-transparent flex items-center justify-center" @click.self="showProfileModal=false">
-        <div class="modal-card bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-          <div class="modal-header p-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white flex justify-between items-center">
-            <h3 class="font-semibold">个人中心</h3>
-            <button @click="showProfileModal=false" class="text-white text-xl">×</button>
-          </div>
+          <div class="modal-card bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div class="modal-header p-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white flex justify-between items-center">
+              <h3 class="font-semibold">个人中心</h3>
+              <button @click="showProfileModal=false" class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl hover:bg-blue-700">×</button>
+            </div>
           <div class="p-6">
             <div class="mb-4 flex items-center gap-4">
               <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold">管</div>
@@ -216,8 +216,8 @@
         <div class="modal-card bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
           <div class="modal-header p-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white flex justify-between items-center">
             <h3 class="font-semibold">修改密码</h3>
-            <button @click="showPwdModal=false" class="text-white text-xl">×</button>
-          </div>
+            <button @click="showPwdModal=false" class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl hover:bg-blue-700">×</button>
+              </div>
           <div class="p-6">
             <div class="mb-4">
               <label class="block text-gray-700 mb-2">旧密码</label>
@@ -232,7 +232,7 @@
               <input v-model="confirmPwd" type="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
             </div>
             <div class="flex justify-end mt-6 space-x-3">
-              <button @click="showPwdModal=false" class="btn-outline">取消</button>
+              <button @click="showPwdModal=false" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">取消</button>
               <button @click="onSavePwd" class="btn-primary">保存</button>
             </div>
           </div>
@@ -318,6 +318,10 @@ export default {
     onSavePwd() {
       if (this.newPwd !== this.confirmPwd) {
         alert('两次密码不一致')
+        return
+      }
+      if (this.newPwd === this.oldPwd) {
+        alert('新密码不能与旧密码相同')
         return
       }
       this.doChangePassword(this.oldPwd, this.newPwd)
