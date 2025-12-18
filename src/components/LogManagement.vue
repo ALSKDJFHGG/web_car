@@ -43,6 +43,9 @@
 <script>
 export default {
   name: 'LogManagement',
+  props: {
+    currentUser: { type: Object, default: null }
+  },
   data() {
     return {
       type: 'all',
@@ -52,6 +55,18 @@ export default {
         { id: 2, time: '2025-12-16 11:42:35', user: '张老师', module: '试题管理', type: '操作', detail: '编辑试题 Q00578' },
         { id: 3, time: '2025-12-16 09:18:47', user: '管理员', module: '系统设置', type: '操作', detail: '修改考试规则' }
       ]
+    }
+  },
+  watch: {
+    // 当传入当前用户时，记录一次登录日志
+    currentUser: {
+      immediate: true,
+      handler(user) {
+        if (!user) return
+        const now = new Date()
+        const timeStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + ' ' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0')
+        this.logs.unshift({ id: Date.now(), time: timeStr, user: user.name || user.username || '管理员', module: '系统', type: '登录', detail: `管理员 ${user.username || user.name} 登录` })
+      }
     }
   },
   computed: {

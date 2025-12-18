@@ -27,6 +27,9 @@
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
+            <th class="px-4 py-3">
+              <input type="checkbox" @change="toggleSelectAll($event)" :checked="allVisibleSelected" />
+            </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">用户ID</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">姓名</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500">手机号</th>
@@ -37,6 +40,9 @@
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="user in pagedUsers" :key="user.id" class="table-row">
+            <td class="px-4 py-3">
+              <input type="checkbox" :value="user.id" v-model="selected" />
+            </td>
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{user.id}}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{user.name}}</td>
             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{user.phone}}</td>
@@ -50,6 +56,20 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- 批量操作工具栏 -->
+    <div v-if="selected.length > 0" class="mt-3 flex items-center justify-between bg-white p-3 rounded-lg shadow">
+      <div class="text-sm text-gray-700">已选择 {{ selected.length }} 个用户</div>
+      <div class="flex items-center space-x-2">
+        <select v-model="bulkRole" class="px-3 py-1 border border-gray-300 rounded">
+          <option value="学员">设置为 学员</option>
+          <option value="教师">设置为 教师</option>
+          <option value="管理员">设置为 管理员</option>
+        </select>
+        <button @click="applyBulkRole" class="px-3 py-1 bg-blue-600 text-white rounded">批量修改权限</button>
+        <button @click="confirmBulkDelete" class="px-3 py-1 bg-red-600 text-white rounded">批量删除</button>
+      </div>
     </div>
 
     <div class="mt-4 flex items-center justify-between">
@@ -92,6 +112,22 @@
         </div>
       </div>
     </div>
+    <!-- 批量删除确认模态 -->
+    <div v-if="showBulkDelete" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+      <div class="bg-white rounded-xl shadow-xl w-full max-w-md">
+        <div class="p-4 border-b flex justify-between items-center">
+          <h3 class="font-semibold">确认批量删除</h3>
+          <button @click="showBulkDelete = false">×</button>
+        </div>
+        <div class="p-6">
+          <p class="mb-4">确认删除选中的 {{ selected.length }} 个用户？此操作不可恢复。</p>
+          <div class="flex justify-end space-x-3">
+            <button @click="showBulkDelete = false" class="px-4 py-2 border border-gray-300 rounded-lg">取消</button>
+            <button @click="doBulkDelete" class="px-4 py-2 bg-red-600 text-white rounded-lg">确定删除</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -111,7 +147,11 @@ export default {
       perPage: 10,
       showModal: false,
       editMode: false,
-      form: { id: null, name: '', phone: '', role: '学员' }
+      form: { id: null, name: '', phone: '', role: '学员' },
+      // 批量操作相关
+      selected: [],
+      bulkRole: '学员',
+      showBulkDelete: false
     }
   },
   computed: {
@@ -128,9 +168,43 @@ export default {
     start() { return (this.page - 1) * this.perPage },
     end() { return Math.min(this.start + this.perPage, this.filtered.length) },
     pagedUsers() { return this.filtered.slice(this.start, this.start + this.perPage) }
+    ,
+    allVisibleSelected() {
+      if (!this.pagedUsers || this.pagedUsers.length === 0) return false
+      return this.pagedUsers.every(u => this.selected.includes(u.id))
+    }
   },
   methods: {
     search() { this.page = 1 },
+    toggleSelectAll(e) {
+      const checked = e.target.checked
+      const ids = this.pagedUsers.map(u => u.id)
+      if (checked) {
+        // 合并入 selected
+        this.selected = Array.from(new Set(this.selected.concat(ids)))
+      } else {
+        // 移除当前页的 id
+        this.selected = this.selected.filter(id => !ids.includes(id))
+      }
+    },
+    confirmBulkDelete() {
+      if (this.selected.length === 0) return
+      this.showBulkDelete = true
+    },
+    doBulkDelete() {
+      this.users = this.users.filter(u => !this.selected.includes(u.id))
+      this.selected = []
+      this.showBulkDelete = false
+      if (this.page > Math.max(1, Math.ceil(this.filtered.length / this.perPage))) {
+        this.page = Math.max(1, Math.ceil(this.filtered.length / this.perPage))
+      }
+    },
+    applyBulkRole() {
+      if (this.selected.length === 0) return alert('请选择要修改的用户')
+      this.users.forEach(u => { if (this.selected.includes(u.id)) u.role = this.bulkRole })
+      this.selected = []
+      alert('已批量修改角色')
+    },
     prevPage() { if (this.page > 1) this.page-- },
     nextPage() { if (this.page < this.pages.length) this.page++ },
     goPage(p) { this.page = p },
