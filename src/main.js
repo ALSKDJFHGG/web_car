@@ -1,5 +1,7 @@
-// import { createApp } from 'vue'
-// import './style.css'
-// import App from './App.vue'
+import './style.css'
+import { initLogin } from './components/Login.js'
 
-createApp(App).mount('#app')
+document.addEventListener('DOMContentLoaded', () => {
+	const mount = document.getElementById('app')
+	initLogin(mount)
+})
