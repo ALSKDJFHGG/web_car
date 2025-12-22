@@ -40,18 +40,17 @@
               <input v-model="regName" type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
             </div>
             <div>
-              <label class="block text-gray-700 mb-2">邮箱</label>
-              <input v-model="regEmail" type="email" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
-            </div>
-            <div>
               <label class="block text-gray-700 mb-2">密码</label>
               <input v-model="regPassword" type="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
             </div>
             <div>
-              <label class="block text-gray-700 mb-2">确认密码</label>
-              <input v-model="regConfirm" type="password" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+              <label class="block text-gray-700 mb-2">真实姓名</label>
+              <input v-model="regRealName" type="text" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
             </div>
-
+            <div>
+              <label class="block text-gray-700 mb-2">手机号码</label>
+              <input v-model="regPhone" type="tel" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+            </div>
             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg">注册并登录</button>
           </div>
         </form>
@@ -126,11 +125,10 @@ export default {
       remember: false,
       // register
       regName: '',
-      regEmail: '',
       regPassword: '',
-      regConfirm: '',
-      error: ''
-      ,
+      regRealName: '',
+      regPhone: '',
+      error: '',
       // 忘记密码流程
       showForgotModal: false,
       fpIdentifier: '', // 邮箱或用户名
@@ -170,20 +168,19 @@ export default {
     },
     onRegister() {
       this.error = ''
-      if (!this.regName || !this.regEmail || !this.regPassword || !this.regConfirm) {
+      // 修改验证逻辑，移除邮箱和确认密码相关验证
+      if (!this.regName || !this.regRealName || !this.regPhone || !this.regPassword) {
         this.error = '请完整填写注册信息。'
         return
       }
-      if (!this.validEmail(this.regEmail)) {
-        this.error = '请输入有效的邮箱地址。'
+      
+      if (!this.validPhone(this.regPhone)) {
+        this.error = '请输入有效的手机号码。'
         return
       }
+      
       if (this.regPassword.length < 6) {
         this.error = '密码至少需要 6 位。'
-        return
-      }
-      if (this.regPassword !== this.regConfirm) {
-        this.error = '两次输入的密码不一致。'
         return
       }
 
@@ -191,8 +188,10 @@ export default {
       setTimeout(() => {
         this.$emit('login', { username: this.regName })
       }, 600)
-    }
-    ,
+    },
+    validPhone(phone) {
+      return /^1[3-9]\d{9}$/.test(phone)
+    },
     // 发送重置验证码（模拟）
     sendResetCode() {
       this.fpError = ''
