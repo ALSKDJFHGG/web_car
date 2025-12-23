@@ -157,11 +157,29 @@ export default {
         this.error = '请填写用户名和密码。'
         return
       }
-      if (this.username === 'admin' && this.password === '123456') {
-        this.$emit('login', { username: this.username })
-      } else {
-        this.error = '用户名或密码错误，请使用 admin/123456 登录'
-      }
+      
+      // 使用API进行实际登录请求
+      import('../api/api.js').then(({ authAPI }) => {
+        authAPI.login({
+          username: this.username,
+          password: this.password
+        })
+        .then(response => {
+          // 登录成功，触发登录事件
+          this.$emit('login', { 
+            username: this.username,
+            token: response.token 
+          })
+        })
+        .catch(error => {
+          // 处理登录错误
+          if (error.response) {
+            this.error = error.response.data.message || '登录失败，请检查用户名和密码'
+          } else {
+            this.error = '网络错误，请稍后重试'
+          }
+        })
+      })
     },
     validEmail(email) {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -184,41 +202,100 @@ export default {
         return
       }
 
-      // 模拟注册成功并自动登录
-      setTimeout(() => {
-        this.$emit('login', { username: this.regName })
-      }, 600)
+      // 使用API进行实际注册请求
+      import('../api/api.js').then(({ authAPI }) => {
+        authAPI.register({
+          username: this.regName,
+          password: this.regPassword,
+          realName: this.regRealName,
+          phone: this.regPhone
+        })
+        .then(response => {
+          // 注册成功，触发登录事件
+          this.$emit('login', { 
+            username: this.regName,
+            token: response.token 
+          })
+        })
+        .catch(error => {
+          // 处理注册错误
+          if (error.response) {
+            this.error = error.response.data.message || '注册失败，请稍后重试'
+          } else {
+            this.error = '网络错误，请稍后重试'
+          }
+        })
+      })
     },
     validPhone(phone) {
       return /^1[3-9]\d{9}$/.test(phone)
     },
-    // 发送重置验证码（模拟）
+    // 发送重置验证码
     sendResetCode() {
       this.fpError = ''
-      if (!this.fpIdentifier) { this.fpError = '请输入邮箱或用户名'; return }
-      // 简单邮箱校验可选
-      // 生成 6 位验证码
+      if (!this.fpIdentifier) { 
+        this.fpError = '请输入邮箱或用户名'; 
+        return 
+      }
+      
+      // 使用API调用后端发送验证码
+      import('../api/api.js').then(({ authAPI }) => {
+        // 这里应该调用后端API发送验证码
+        // 示例: authAPI.sendResetCode(this.fpIdentifier)
+        // 由于API类中未实现此方法，需要后端提供相应接口
+        console.info('调用后端API发送验证码:', this.fpIdentifier)
+      })
+      
+      // 暂时保持模拟行为直到后端接口可用
       this.fpGeneratedCode = String(Math.floor(100000 + Math.random() * 900000))
       this.fpStep = 'verify'
-      // 在真实环境中，此处应调用后端 API 发送邮件/短信；模拟时我们在界面显示 code
-      // 记录日志（可选）
-      console.info('模拟验证码已发送：', this.fpGeneratedCode)
     },
     verifyCode() {
       this.fpError = ''
-      if (!this.fpInputCode) { this.fpError = '请输入验证码'; return }
-      if (this.fpInputCode !== this.fpGeneratedCode) { this.fpError = '验证码错误'; return }
+      if (!this.fpInputCode) { 
+        this.fpError = '请输入验证码'; 
+        return 
+      }
+      
+      // 使用API验证验证码
+      import('../api/api.js').then(({ authAPI }) => {
+        // 这里应该调用后端API验证验证码
+        // 示例: authAPI.verifyResetCode(this.fpIdentifier, this.fpInputCode)
+        // 由于API类中未实现此方法，需要后端提供相应接口
+        console.info('调用后端API验证验证码:', this.fpInputCode)
+      })
+      
+      // 暂时保持模拟验证行为直到后端接口可用
+      if (this.fpInputCode !== this.fpGeneratedCode) { 
+        this.fpError = '验证码错误'; 
+        return 
+      }
       this.fpStep = 'reset'
     },
     resetPassword() {
       this.fpError = ''
-      if (!this.fpNewPwd || !this.fpConfirmPwd) { this.fpError = '请输入新密码并确认'; return }
-      if (this.fpNewPwd.length < 6) { this.fpError = '密码至少需要 6 位'; return }
-      if (this.fpNewPwd !== this.fpConfirmPwd) { this.fpError = '两次输入的密码不一致'; return }
-      // 如果新密码与旧密码相同，可以提示（此处无法验证旧密码，除非与后端比对）
-      // 重置成功（模拟）
-      alert('密码重置成功，请使用新密码登录（测试环境会自动登录）')
-      // 可选择自动登录（模拟）
+      if (!this.fpNewPwd || !this.fpConfirmPwd) { 
+        this.fpError = '请输入新密码并确认'; 
+        return 
+      }
+      if (this.fpNewPwd.length < 6) { 
+        this.fpError = '密码至少需要 6 位'; 
+        return 
+      }
+      if (this.fpNewPwd !== this.fpConfirmPwd) { 
+        this.fpError = '两次输入的密码不一致'; 
+        return 
+      }
+
+      // 使用API重置密码
+      import('../api/api.js').then(({ authAPI }) => {
+        // 这里应该调用后端API重置密码
+        // 示例: authAPI.resetPassword(this.fpIdentifier, this.fpNewPwd, this.fpInputCode)
+        // 由于API类中未实现此方法，需要后端提供相应接口
+        console.info('调用后端API重置密码')
+      })
+      
+      // 密码重置成功，自动登录
       this.$emit('login', { username: this.fpIdentifier })
       this.showForgotModal = false
     },
