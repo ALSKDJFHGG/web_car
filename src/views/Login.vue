@@ -6,12 +6,12 @@ import type { FormInstance, FormRules } from 'element-plus'
 const isLogin = ref(true);
 
 // 表单数据
-const loginForm = ref({ username: '', password: '' });
-const registerForm = ref({ username: '', password: '', confirmPassword: '' });
+const loginForm = ref({ phone: '', password: '' });
+const registerForm = ref({ phone: '', password: '', confirmPassword: '' });
 
 // 错误信息
-const loginErrors = ref({ username: '', password: '' });
-const registerErrors = ref({ username: '', password: '', confirmPassword: '' });
+const loginErrors = ref({ phone: '', password: '' });
+const registerErrors = ref({ phone: '', password: '', confirmPassword: '' });
 
 // 切换表单显示
 const toggleForm = () => {
@@ -34,21 +34,21 @@ const validateConfirmPassword = (password: string, confirmPassword: string) => {
 };
 
 const rules = reactive<FormRules<typeof loginForm>>({
-  username: [{ required: true, trigger: 'blur' }],
+  phone: [{ required: true, trigger: 'blur' }],
   password: [{ required: true, trigger: 'blur' }],
 })
 
 // 实时验证函数
-const validateLoginUsername = () => {
-  loginErrors.value.username = validateUsername(loginForm.value.username);
+const validateLoginPhone = () => {
+  loginErrors.value.phone = validateUsername(loginForm.value.phone);
 };
 
 const validateLoginPassword = () => {
   loginErrors.value.password = validatePassword(loginForm.value.password);
 };
 
-const validateRegisterUsername = () => {
-  registerErrors.value.username = validateUsername(registerForm.value.username);
+const validateRegisterPhone = () => {
+  registerErrors.value.phone = validateUsername(registerForm.value.phone);
 };
 
 const validateRegisterPassword = () => {
@@ -62,15 +62,9 @@ const validateRegisterConfirmPassword = () => {
   );
 };
 
-const submitLogin = () => {
-  if (!loginErrors.value.username && !loginErrors.value.password) {
-    alert('登录成功');
-  }
-};
-
 const submitRegister = () => {
   if (
-    !registerErrors.value.username &&
+    !registerErrors.value.phone &&
     !registerErrors.value.password &&
     !registerErrors.value.confirmPassword
   ) {
@@ -78,7 +72,9 @@ const submitRegister = () => {
   }
 };
 
+// 调用注册接口
 import { userRegisterService } from '@/api/user.js'
+import { userLoginService } from '@/api/user.js';
 const register = async() => {
   let result = await userRegisterService(registerForm);
   if(result.data.code === 0){
@@ -86,7 +82,22 @@ const register = async() => {
   }else{
     alert("注册失败");
   }
-}
+};
+
+const submitLogin = async() => {
+      // 准备登录数据
+      const loginData = {
+        phone: loginForm.value.phone,
+        password: loginForm.value.password
+      };
+      
+      // 调用登录接口
+      const response = await userLoginService(loginData);
+      
+      // 登录成功处理
+      alert('登录成功');
+      console.log('登录响应:', response);   
+};
 </script>
 
 <template>
@@ -94,23 +105,10 @@ const register = async() => {
     <!-- 登录表单 -->
     <div v-if="isLogin" class="form-box">
       <h2>登录</h2>
-      <!-- <form @submit.prevent="submitLogin">
-        <div class="form-group">
-          <label for="login-username">用户名</label>
-            <el-input v-model="loginForm.username" style="width: 100%" @input="validateLoginUsername" placeholder="请输入用户名" />
-          <p class="error" v-if="loginErrors.username">{{ loginErrors.username }}</p>
-        </div>
-        <div class="form-group">
-          <label for="login-password">密码</label>
-          <el-input v-model="loginForm.password" style="width: 100%" type="password" @input="validateLoginPassword" placeholder="请输入密码" show-password />
-          <p class="error" v-if="loginErrors.password">{{ loginErrors.password }}</p>
-        </div>
-        <button type="submit" class="btn">登录</button>
-      </form> -->
       <form @submit.prevent="submitLogin">
         <el-form :model="loginForm" :rules="rules" ref="loginFormRef" label-width="80px" class="demo-ruleForm">
-          <el-form-item label="用户名" prop="username" label-position="top">
-            <el-input v-model="loginForm.username" placeholder="请输入用户名"></el-input>
+          <el-form-item label="手机号" prop="phone" label-position="top">
+            <el-input v-model="loginForm.phone" placeholder="请输入手机号"></el-input>
           </el-form-item>
           <el-form-item label="密码" prop="password" label-position="top">
             <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" show-password></el-input>
@@ -128,10 +126,10 @@ const register = async() => {
       <h2>注册</h2>
       <form @submit.prevent="submitRegister">
         <div class="form-group">
-          <label for="register-username">用户名</label>
-          <el-input v-model="registerForm.username" style="width: 100%" @input="validateRegisterUsername"
-            placeholder="请输入用户名" />
-          <p class="error" v-if="registerErrors.username">{{ registerErrors.username }}</p>
+          <label for="register-phone">手机号</label>
+          <el-input v-model="registerForm.phone" style="width: 100%" @input="validateRegisterPhone"
+            placeholder="请输入手机号" />
+          <p class="error" v-if="registerErrors.phone">{{ registerErrors.phone }}</p>
         </div>
         <div class="form-group">
           <label for="register-password">密码</label>
