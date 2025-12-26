@@ -71,15 +71,102 @@
         <router-view />
       </el-main>
     </el-container>
+
+    <!-- 个人信息对话框 -->
+    <el-dialog
+      v-model="infoDialogVisible"
+      title="个人信息"
+      width="600px"
+    >
+      <el-descriptions :column="1" border v-if="userInfo">
+        <el-descriptions-item label="用户ID">
+          {{ userInfo.userId }}
+        </el-descriptions-item>
+        <el-descriptions-item label="用户名">
+          {{ userInfo.username }}
+        </el-descriptions-item>
+        <el-descriptions-item label="真实姓名">
+          {{ userInfo.realname }}
+        </el-descriptions-item>
+        <el-descriptions-item label="手机号">
+          {{ userInfo.phone }}
+        </el-descriptions-item>
+        <el-descriptions-item label="角色">
+          <el-tag :type="userInfo.role === 'admin' ? 'danger' : 'primary'">
+            {{ userInfo.role === 'admin' ? '管理员' : '普通用户' }}
+          </el-tag>
+        </el-descriptions-item>
+      </el-descriptions>
+      <div v-else style="text-align: center; padding: 20px;">
+        <el-icon class="is-loading"><Loading /></el-icon>
+        <span style="margin-left: 10px">加载中...</span>
+      </div>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="infoDialogVisible = false">关闭</el-button>
+        </span>
+      </template>
+    </el-dialog>
+
+    <!-- 修改密码对话框 -->
+    <el-dialog
+      v-model="passwordDialogVisible"
+      title="修改密码"
+      width="500px"
+      @close="handlePasswordDialogClose"
+    >
+      <el-form
+        ref="passwordFormRef"
+        :model="passwordForm"
+        :rules="passwordFormRules"
+        label-width="100px"
+      >
+        <el-form-item label="原密码" prop="old_pwd">
+          <el-input
+            v-model="passwordForm.old_pwd"
+            type="password"
+            placeholder="请输入原密码"
+            show-password
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="新密码" prop="new_pwd">
+          <el-input
+            v-model="passwordForm.new_pwd"
+            type="password"
+            placeholder="请输入新密码"
+            show-password
+            clearable
+          />
+        </el-form-item>
+        <el-form-item label="确认密码" prop="valid_pwd">
+          <el-input
+            v-model="passwordForm.valid_pwd"
+            type="password"
+            placeholder="请再次输入新密码"
+            show-password
+            clearable
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="passwordDialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="passwordSubmitLoading" @click="handlePasswordSubmit">
+            确定
+          </el-button>
+        </span>
+      </template>
+    </el-dialog>
   </el-container>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { HomeFilled, User, Document, EditPen, List, ArrowDown } from '@element-plus/icons-vue'
-import { getUserInfoService } from '@/api/user.js'
+import { HomeFilled, User, Document, EditPen, List, ArrowDown, Loading } from '@element-plus/icons-vue'
+import { getUserInfoService, updatePasswordService } from '@/api/user.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -88,12 +175,20 @@ const userInfo = ref(null)
 const activeMenu = computed(() => route.path)
 const currentRoute = computed(() => route)
 
+// 对话框状态
+const infoDialogVisible = ref(false)
+const passwordDialogVisible = ref(false)
+
 // 获取用户信息
 const fetchUserInfo = async () => {
   try {
     const res = await getUserInfoService()
-    if (res.code === 0) {
+    if (res.code === 0 || res.code === 200) {
       userInfo.value = res.data
+      // 保存到localStorage
+      if (res.data) {
+        localStorage.setItem('userInfo', JSON.stringify(res.data))
+      }
     }
   } catch (error) {
     console.error('获取用户信息失败:', error)
@@ -126,10 +221,90 @@ const handleCommand = async (command) => {
       // 用户取消
     }
   } else if (command === 'password') {
-    ElMessage.info('修改密码功能待实现')
+    passwordDialogVisible.value = true
   } else if (command === 'info') {
-    ElMessage.info('个人信息功能待实现')
+    // 刷新用户信息
+    await fetchUserInfo()
+    infoDialogVisible.value = true
   }
+}
+
+// 密码表单
+const passwordFormRef = ref(null)
+const passwordSubmitLoading = ref(false)
+const passwordForm = reactive({
+  old_pwd: '',
+  new_pwd: '',
+  valid_pwd: ''
+})
+
+// 密码表单验证规则
+const passwordFormRules = {
+  old_pwd: [
+    { required: true, message: '请输入原密码', trigger: 'blur' }
+  ],
+  new_pwd: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+  ],
+  valid_pwd: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (value !== passwordForm.new_pwd) {
+          callback(new Error('两次输入的密码不一致'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
+}
+
+// 提交修改密码
+const handlePasswordSubmit = async () => {
+  if (!passwordFormRef.value) return
+  await passwordFormRef.value.validate(async (valid) => {
+    if (valid) {
+      passwordSubmitLoading.value = true
+      try {
+        const data = {
+          old_pwd: passwordForm.old_pwd,
+          new_pwd: passwordForm.new_pwd,
+          valid_pwd: passwordForm.valid_pwd
+        }
+        const res = await updatePasswordService(data)
+        if (res.code === 0 || res.code === 200) {
+          ElMessage.success('密码修改成功，请重新登录')
+          passwordDialogVisible.value = false
+          // 延迟退出登录，让用户看到成功提示
+          setTimeout(() => {
+            localStorage.removeItem('token')
+            localStorage.removeItem('userInfo')
+            router.push('/login')
+          }, 1500)
+        }
+      } catch (error) {
+        console.error('修改密码失败:', error)
+        ElMessage.error('修改密码失败，请重试')
+      } finally {
+        passwordSubmitLoading.value = false
+      }
+    }
+  })
+}
+
+// 关闭密码对话框
+const handlePasswordDialogClose = () => {
+  if (passwordFormRef.value) {
+    passwordFormRef.value.resetFields()
+  }
+  Object.assign(passwordForm, {
+    old_pwd: '',
+    new_pwd: '',
+    valid_pwd: ''
+  })
 }
 
 onMounted(() => {

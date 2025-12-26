@@ -235,26 +235,26 @@ const submitLogin = async () => {
           username: loginForm.username,
           password: loginForm.password
         })
-        if (res.code === 0) {
+        if (res.code === 0 || res.code === 200) {
           console.log('登录成功，返回数据:', res)
           
-          // 保存用户信息
-          if (res.data) {
-            localStorage.setItem('userInfo', JSON.stringify(res.data))
-          }
+          // 根据JWT文档，响应格式为：
+          // { "code": 200, "message": "success", "data": { "token": "...", "userInfo": {...} } }
+          const token = res.data?.token
+          const userInfo = res.data?.userInfo || res.data
           
-          // 从多个可能的位置获取token（响应拦截器可能已经将响应头的token添加到res.token）
-          let token = res.token || res.data?.token
-          
-          // 保存token（必须保存，否则路由守卫会拦截）
+          // 保存token（必须保存，用于后续请求的Authorization header）
           if (token) {
             localStorage.setItem('token', token)
             console.log('Token已保存:', token.substring(0, 20) + '...')
           } else {
-            // 如果确实没有token，保存一个登录成功的标识
-            // 这样可以避免路由守卫拦截，但实际项目中应该确保后端返回token
-            localStorage.setItem('token', 'logged_in_' + Date.now())
-            console.warn('未获取到token，使用临时标识。请检查接口是否返回token')
+            ElMessage.error('登录失败：未获取到token')
+            return
+          }
+          
+          // 保存用户信息
+          if (userInfo) {
+            localStorage.setItem('userInfo', JSON.stringify(userInfo))
           }
           
           ElMessage.success('登录成功')
@@ -291,7 +291,7 @@ const submitRegister = async () => {
         }
         console.log('注册请求数据:', registerData)
         const res = await userRegisterService(registerData)
-        if (res.code === 0) {
+        if (res.code === 0 || res.code === 200) {
           ElMessage.success('注册成功，请登录')
           // 清空注册表单
           Object.assign(registerForm, {

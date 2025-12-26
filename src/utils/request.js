@@ -14,10 +14,13 @@ instance.interceptors.request.use(
         
         // 注意：这里不能直接调用 useTokenStore()，因为它依赖于 Vue 应用上下文
         // 只能在组件或 setup 函数中使用
-        // 改为从 localStorage 直接获取 token
+        // 从 localStorage 获取 token
+        // 根据JWT文档，token需要以 "Bearer {token}" 格式放在 Authorization header 中
         const token = localStorage.getItem('token');
         if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
+            // 确保token不包含Bearer前缀（如果包含则移除）
+            const cleanToken = token.replace(/^Bearer\s+/i, '');
+            config.headers.Authorization = `Bearer ${cleanToken}`;
         }
         return config;
     },
@@ -31,20 +34,9 @@ instance.interceptors.request.use(
 // 添加响应拦截器
 instance.interceptors.response.use(
     result => {
-        // 检查响应头中是否有token（登录接口可能在响应头返回token）
-        const token = result.headers?.authorization || 
-                      result.headers?.Authorization ||
-                      result.headers?.['authorization'] ||
-                      result.headers?.['Authorization']
-        
-        if (token) {
-            // 移除Bearer前缀（如果有）
-            const cleanToken = token.replace(/^Bearer\s+/i, '')
-            // 将token添加到响应数据中，方便登录页面使用
-            if (result.data) {
-                result.data.token = cleanToken
-            }
-        }
+        // 根据JWT文档，token在响应体的data中，格式为：
+        // { "code": 200, "message": "success", "data": { "token": "...", "userInfo": {...} } }
+        // 不需要从响应头获取token，直接返回响应数据即可
         
         // 判断业务状态码
         if (result.data.code === 0 || result.data.code === 200) {

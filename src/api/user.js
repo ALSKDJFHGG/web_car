@@ -28,3 +28,24 @@ export const updatePasswordService = (data) => {
   return request.put('/admin/auth/updatePwd', data)
 }
 
+// ========== 用户管理相关接口 ==========
+
+// 分页查询用户
+export const getUserListService = (params) => {
+  return request.get('/admin/user', { params })
+}
+
+// 更改用户状态
+export const updateUserStatusService = (id, data) => {
+  return request.put(`/admin/user/${id}`, data, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
+// 删除用户
+export const deleteUserService = (id) => {
+  return request.delete(`/admin/user/${id}`)
+}
+
