@@ -1,0 +1,1153 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "驾考题库系统 API",
+    "description": "基于 MySQL 数据库设计的驾考题库系统后端接口规范。\n- 科目编码：`km1`（科目一）、`km4`（科目四）\n- 题型ID：1（单选题）、2（判断题）、3（多选题）\n- 选项标签：单选/多选用 `A`/`B`/`C`/`D`；判断题用 `√`/`×`\n",
+    "version": "1.1.0"
+  },
+  "tags": [
+    {
+      "name": "管理端/认证"
+    },
+    {
+      "name": "管理端/题目管理"
+    },
+    {
+      "name": "管理端/基础数据"
+    }
+  ],
+  "paths": {
+    "/admin/auth/login": {
+      "post": {
+        "summary": "管理员登录",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "管理端/认证"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ7XCJpZFwiOlwiMVwiLFwidXNlcm5hbWVcIjpcImFkbWluXCIsXCJwaG9uZVwiOlwiMTM4MDAxMzgwMDBcIn0ifQ.wCEDKi31OQvskIs1IG84ScnQsIISCtNFkCS8c-lnB9k",
+            "schema": {
+              "type": "string",
+              "default": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ7XCJpZFwiOlwiMVwiLFwidXNlcm5hbWVcIjpcImFkbWluXCIsXCJwaG9uZVwiOlwiMTM4MDAxMzgwMDBcIn0ifQ.wCEDKi31OQvskIs1IG84ScnQsIISCtNFkCS8c-lnB9k"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "password"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "pattern": "^1[3-9]\\d{9}$",
+                    "example": "13860852235"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "D_WuBtJHrofE7CI"
+                  }
+                }
+              },
+              "examples": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "登录成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseWithUserInfo"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/auth/register": {
+      "post": {
+        "summary": "管理员注册（需权限）",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "管理端/认证"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ7XCJpZFwiOlwiMVwiLFwidXNlcm5hbWVcIjpcImFkbWluXCIsXCJwaG9uZVwiOlwiMTM4MDAxMzgwMDBcIn0ifQ.wCEDKi31OQvskIs1IG84ScnQsIISCtNFkCS8c-lnB9k",
+            "schema": {
+              "type": "string",
+              "default": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ7XCJpZFwiOlwiMVwiLFwidXNlcm5hbWVcIjpcImFkbWluXCIsXCJwaG9uZVwiOlwiMTM4MDAxMzgwMDBcIn0ifQ.wCEDKi31OQvskIs1IG84ScnQsIISCtNFkCS8c-lnB9k"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "username",
+                  "phone",
+                  "password",
+                  "realname"
+                ],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "minLength": 2,
+                    "example": "test"
+                  },
+                  "phone": {
+                    "type": "string",
+                    "pattern": "^1[3-9]\\d{9}$",
+                    "example": "13800138000"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 6
+                  },
+                  "realname": {
+                    "type": "string",
+                    "example": "张三"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/UserInfo"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/auth/info": {
+      "get": {
+        "summary": "获取当前管理员信息",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "管理端/认证"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ7XCJpZFwiOlwiMVwiLFwidXNlcm5hbWVcIjpcImFkbWluXCIsXCJwaG9uZVwiOlwiMTM4MDAxMzgwMDBcIn0ifQ.wCEDKi31OQvskIs1IG84ScnQsIISCtNFkCS8c-lnB9k",
+            "schema": {
+              "type": "string",
+              "default": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ7XCJpZFwiOlwiMVwiLFwidXNlcm5hbWVcIjpcImFkbWluXCIsXCJwaG9uZVwiOlwiMTM4MDAxMzgwMDBcIn0ifQ.wCEDKi31OQvskIs1IG84ScnQsIISCtNFkCS8c-lnB9k"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseWithUserInfo"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/auth/updatePwd": {
+      "put": {
+        "summary": "修改密码",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "管理端/认证"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ7XCJpZFwiOlwiMVwiLFwidXNlcm5hbWVcIjpcImFkbWluXCIsXCJwaG9uZVwiOlwiMTM4MDAxMzgwMDBcIn0ifQ.wCEDKi31OQvskIs1IG84ScnQsIISCtNFkCS8c-lnB9k",
+            "schema": {
+              "type": "string",
+              "default": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ7XCJpZFwiOlwiMVwiLFwidXNlcm5hbWVcIjpcImFkbWluXCIsXCJwaG9uZVwiOlwiMTM4MDAxMzgwMDBcIn0ifQ.wCEDKi31OQvskIs1IG84ScnQsIISCtNFkCS8c-lnB9k"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "old_pwd",
+                  "new_pwd",
+                  "valid_pwd"
+                ],
+                "properties": {
+                  "old_pwd": {
+                    "type": "string"
+                  },
+                  "new_pwd": {
+                    "type": "string",
+                    "minLength": 6
+                  },
+                  "valid_pwd": {
+                    "type": "string"
+                  }
+                },
+                "example": {
+                  "old_pwd": "123456",
+                  "new_pwd": "abcdef",
+                  "valid_pwd": "abcdef"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "修改成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseEmpty"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/questions": {
+      "get": {
+        "summary": "分页查询题目列表",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "管理端/题目管理"
+        ],
+        "parameters": [
+          {
+            "name": "pageNum",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "subject",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SubjectEnum"
+            }
+          },
+          {
+            "name": "typeId",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TypeId"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "description": "",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": false,
+            "example": "",
+            "schema": {
+              "type": "string",
+              "example": "Bearer eyJhbGci..."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "list": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/QuestionBrief"
+                          }
+                        },
+                        "pagination": {
+                          "$ref": "#/components/schemas/Pagination"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      },
+      "post": {
+        "summary": "创建题目",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "管理端/题目管理"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ7XCJpZFwiOlwiMVwiLFwidXNlcm5hbWVcIjpcImFkbWluXCIsXCJwaG9uZVwiOlwiMTM4MDAxMzgwMDBcIn0ifQ.wCEDKi31OQvskIs1IG84ScnQsIISCtNFkCS8c-lnB9k",
+            "schema": {
+              "type": "string",
+              "default": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ7XCJpZFwiOlwiMVwiLFwidXNlcm5hbWVcIjpcImFkbWluXCIsXCJwaG9uZVwiOlwiMTM4MDAxMzgwMDBcIn0ifQ.wCEDKi31OQvskIs1IG84ScnQsIISCtNFkCS8c-lnB9k"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "创建成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "questionId": {
+                          "type": "integer",
+                          "example": 1001
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/questions/{id}": {
+      "get": {
+        "summary": "获取题目详情（含选项，管理用）",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "管理端/题目管理"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": false,
+            "example": "",
+            "schema": {
+              "type": "string",
+              "example": "Bearer eyJhbGci..."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/QuestionDetailAdmin"
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      },
+      "put": {
+        "summary": "更新题目",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "管理端/题目管理"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": false,
+            "example": "",
+            "schema": {
+              "type": "string",
+              "example": "Bearer eyJhbGci..."
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuestionUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "更新成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseEmpty"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      },
+      "delete": {
+        "summary": "删除单个题目",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "管理端/题目管理"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "",
+            "required": true,
+            "example": 0,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": false,
+            "example": "",
+            "schema": {
+              "type": "string",
+              "example": "Bearer eyJhbGci..."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "删除成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseEmpty"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/questions/batch": {
+      "patch": {
+        "summary": "批量删除题目",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "管理端/题目管理"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ7XCJpZFwiOlwiMVwiLFwidXNlcm5hbWVcIjpcImFkbWluXCIsXCJwaG9uZVwiOlwiMTM4MDAxMzgwMDBcIn0ifQ.wCEDKi31OQvskIs1IG84ScnQsIISCtNFkCS8c-lnB9k",
+            "schema": {
+              "type": "string",
+              "default": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJ7XCJpZFwiOlwiMVwiLFwidXNlcm5hbWVcIjpcImFkbWluXCIsXCJwaG9uZVwiOlwiMTM4MDAxMzgwMDBcIn0ifQ.wCEDKi31OQvskIs1IG84ScnQsIISCtNFkCS8c-lnB9k"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "ids"
+                ],
+                "properties": {
+                  "ids": {
+                    "type": "array",
+                    "items": {
+                      "type": "integer"
+                    },
+                    "minItems": 1
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiResponseEmpty"
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/questions/statistics": {
+      "get": {
+        "summary": "获取题目统计信息",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "管理端/题目管理"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": false,
+            "example": "",
+            "schema": {
+              "type": "string",
+              "example": "Bearer eyJhbGci..."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer",
+                          "example": 1000
+                        },
+                        "bySubject": {
+                          "type": "object",
+                          "properties": {
+                            "km1": {
+                              "type": "integer",
+                              "example": 800
+                            },
+                            "km4": {
+                              "type": "integer",
+                              "example": 200
+                            }
+                          }
+                        },
+                        "byType": {
+                          "type": "object",
+                          "properties": {
+                            "1": {
+                              "type": "integer",
+                              "example": 500
+                            },
+                            "2": {
+                              "type": "integer",
+                              "example": 300
+                            },
+                            "3": {
+                              "type": "integer",
+                              "example": 200
+                            }
+                          }
+                        },
+                        "todayAdded": {
+                          "type": "integer"
+                        },
+                        "weekAdded": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/question-types": {
+      "get": {
+        "summary": "获取题型列表",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "管理端/基础数据"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": false,
+            "example": "",
+            "schema": {
+              "type": "string",
+              "example": "Bearer eyJhbGci..."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/QuestionType"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    },
+    "/admin/subjects": {
+      "get": {
+        "summary": "获取科目枚举",
+        "deprecated": false,
+        "description": "",
+        "tags": [
+          "管理端/基础数据"
+        ],
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "",
+            "required": false,
+            "example": "",
+            "schema": {
+              "type": "string",
+              "example": "Bearer eyJhbGci..."
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "成功",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "example": 0
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/SubjectItem"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "headers": {}
+          }
+        },
+        "security": []
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "SubjectEnum": {
+        "type": "string",
+        "enum": [
+          "km1",
+          "km4"
+        ],
+        "example": "km1"
+      },
+      "SubjectItem": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/SubjectEnum"
+          },
+          "name": {
+            "type": "string",
+            "enum": [
+              "科目一",
+              "科目四"
+            ]
+          }
+        }
+      },
+      "TypeId": {
+        "type": "integer",
+        "enum": [
+          1,
+          2,
+          3
+        ],
+        "example": 1
+      },
+      "OptionLabel": {
+        "type": "string",
+        "pattern": "^[A-D√×]$",
+        "example": "A"
+      },
+      "QuestionType": {
+        "type": "object",
+        "properties": {
+          "typeId": {
+            "$ref": "#/components/schemas/TypeId"
+          },
+          "typeName": {
+            "type": "string",
+            "example": "单选题"
+          }
+        }
+      },
+      "UserInfo": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer"
+          },
+          "username": {
+            "type": "string"
+          },
+          "realname": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "user"
+            ]
+          }
+        }
+      },
+      "ApiResponseWithUserInfo": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "example": "success"
+          },
+          "data": {
+            "$ref": "#/components/schemas/UserInfo"
+          }
+        }
+      },
+      "ApiResponseEmpty": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 0
+          },
+          "message": {
+            "type": "string",
+            "example": "success"
+          }
+        }
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "example": 1
+          },
+          "size": {
+            "type": "integer",
+            "example": 10
+          },
+          "total": {
+            "type": "integer",
+            "example": 100
+          },
+          "pages": {
+            "type": "integer",
+            "example": 10
+          }
+        }
+      },
+      "QuestionBrief": {
+        "type": "object",
+        "properties": {
+          "questionId": {
+            "type": "integer"
+          },
+          "subject": {
+            "$ref": "#/components/schemas/SubjectEnum"
+          },
+          "typeId": {
+            "$ref": "#/components/schemas/TypeId"
+          },
+          "content": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "QuestionCreate": {
+        "type": "object",
+        "required": [
+          "subject",
+          "typeId",
+          "content",
+          "options"
+        ],
+        "properties": {
+          "subject": {
+            "$ref": "#/components/schemas/SubjectEnum"
+          },
+          "typeId": {
+            "$ref": "#/components/schemas/TypeId"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "options": {
+            "type": "array",
+            "minItems": 2,
+            "items": {
+              "$ref": "#/components/schemas/QuestionOptionCreate"
+            }
+          }
+        }
+      },
+      "QuestionUpdate": {
+        "type": "object",
+        "properties": {
+          "subject": {
+            "$ref": "#/components/schemas/SubjectEnum"
+          },
+          "typeId": {
+            "$ref": "#/components/schemas/TypeId"
+          },
+          "content": {
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuestionOptionUpdate"
+            }
+          },
+          "explanation": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "QuestionOptionCreate": {
+        "type": "object",
+        "required": [
+          "label",
+          "content",
+          "isCorrect"
+        ],
+        "properties": {
+          "label": {
+            "$ref": "#/components/schemas/OptionLabel"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1
+          },
+          "isCorrect": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QuestionOptionUpdate": {
+        "type": "object",
+        "required": [
+          "label",
+          "content",
+          "isCorrect"
+        ],
+        "properties": {
+          "label": {
+            "$ref": "#/components/schemas/OptionLabel"
+          },
+          "content": {
+            "type": "string"
+          },
+          "isCorrect": {
+            "type": "boolean"
+          }
+        }
+      },
+      "QuestionDetailPublic": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/QuestionBrief"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "label": {
+                      "$ref": "#/components/schemas/OptionLabel"
+                    },
+                    "content": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "QuestionDetailAdmin": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/QuestionDetailPublic"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "options": {
+                "type": "array",
+                "items": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/QuestionOptionCreate"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "optionId": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "explanation": {
+                "type": "string",
+                "nullable": true
+              },
+              "createdAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "responses": {},
+    "securitySchemes": {}
+  },
+  "servers": [],
+  "security": []
+}

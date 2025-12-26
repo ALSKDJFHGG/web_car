@@ -1,13 +1,18 @@
-<script setup>
-  import Login from './views/Login.vue';
-  import Layout from './views/Layout.vue';
-</script>
-
 <template>
-  <!-- <Login /> -->
-  <Layout />
+  <router-view />
 </template>
 
-<style scoped>
+<script setup>
+</script>
 
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
 </style>

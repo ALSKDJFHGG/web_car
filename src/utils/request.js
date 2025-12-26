@@ -31,6 +31,21 @@ instance.interceptors.request.use(
 // 添加响应拦截器
 instance.interceptors.response.use(
     result => {
+        // 检查响应头中是否有token（登录接口可能在响应头返回token）
+        const token = result.headers?.authorization || 
+                      result.headers?.Authorization ||
+                      result.headers?.['authorization'] ||
+                      result.headers?.['Authorization']
+        
+        if (token) {
+            // 移除Bearer前缀（如果有）
+            const cleanToken = token.replace(/^Bearer\s+/i, '')
+            // 将token添加到响应数据中，方便登录页面使用
+            if (result.data) {
+                result.data.token = cleanToken
+            }
+        }
+        
         // 判断业务状态码
         if (result.data.code === 0 || result.data.code === 200) {
             return result.data;

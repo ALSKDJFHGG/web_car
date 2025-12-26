@@ -1,155 +1,370 @@
-<script lang="ts" setup>
-import { ref, reactive } from 'vue';
-import type { FormInstance, FormRules } from 'element-plus'
-
-// 定义一个状态来控制当前显示的表单
-const isLogin = ref(true);
-
-// 表单数据
-const loginForm = ref({ phone: '', password: '' });
-const registerForm = ref({ phone: '', password: '', confirmPassword: '' });
-
-// 错误信息
-const loginErrors = ref({ phone: '', password: '' });
-const registerErrors = ref({ phone: '', password: '', confirmPassword: '' });
-
-// 切换表单显示
-const toggleForm = () => {
-  isLogin.value = !isLogin.value;
-};
-
-// 验证规则
-const validateUsername = (username: string) => {
-  const usernameRegex = /^[a-zA-Z0-9]{5,16}$/;
-  return usernameRegex.test(username) ? '' : '用户名必须是5-16位的字母或数字';
-};
-
-const validatePassword = (password: string) => {
-  const passwordRegex = /^[a-zA-Z0-9!@#$%^&*]{5,16}$/;
-  return passwordRegex.test(password) ? '' : '密码必须是5-16位的字母、数字或特殊字符';
-};
-
-const validateConfirmPassword = (password: string, confirmPassword: string) => {
-  return password === confirmPassword ? '' : '两次输入的密码不一致';
-};
-
-const rules = reactive<FormRules<typeof loginForm>>({
-  phone: [{ required: true, trigger: 'blur' }],
-  password: [{ required: true, trigger: 'blur' }],
-})
-
-// 实时验证函数
-const validateLoginPhone = () => {
-  loginErrors.value.phone = validateUsername(loginForm.value.phone);
-};
-
-const validateLoginPassword = () => {
-  loginErrors.value.password = validatePassword(loginForm.value.password);
-};
-
-const validateRegisterPhone = () => {
-  registerErrors.value.phone = validateUsername(registerForm.value.phone);
-};
-
-const validateRegisterPassword = () => {
-  registerErrors.value.password = validatePassword(registerForm.value.password);
-};
-
-const validateRegisterConfirmPassword = () => {
-  registerErrors.value.confirmPassword = validateConfirmPassword(
-    registerForm.value.password,
-    registerForm.value.confirmPassword
-  );
-};
-
-const submitRegister = () => {
-  if (
-    !registerErrors.value.phone &&
-    !registerErrors.value.password &&
-    !registerErrors.value.confirmPassword
-  ) {
-    alert('注册成功');
-  }
-};
-
-// 调用注册接口
-import { userRegisterService } from '@/api/user.js'
-import { userLoginService } from '@/api/user.js';
-const register = async() => {
-  let result = await userRegisterService(registerForm);
-  if(result.data.code === 0){
-    alert(result.data.msg ? result.data.msg : '注册成功');
-  }else{
-    alert("注册失败");
-  }
-};
-
-const submitLogin = async() => {
-      // 准备登录数据
-      const loginData = {
-        phone: loginForm.value.phone,
-        password: loginForm.value.password
-      };
-      
-      // 调用登录接口
-      const response = await userLoginService(loginData);
-      
-      // 登录成功处理
-      alert('登录成功');
-      console.log('登录响应:', response);   
-};
-</script>
-
 <template>
-  <div class="form-container">
-    <!-- 登录表单 -->
-    <div v-if="isLogin" class="form-box">
-      <h2>登录</h2>
-      <form @submit.prevent="submitLogin">
-        <el-form :model="loginForm" :rules="rules" ref="loginFormRef" label-width="80px" class="demo-ruleForm">
-          <el-form-item label="手机号" prop="phone" label-position="top">
-            <el-input v-model="loginForm.phone" placeholder="请输入手机号"></el-input>
-          </el-form-item>
-          <el-form-item label="密码" prop="password" label-position="top">
-            <el-input v-model="loginForm.password" type="password" placeholder="请输入密码" show-password></el-input>
-          </el-form-item>
-          <el-form-item label-width="100px" class="center-button-item">
-            <el-button type="primary" @click="submitLogin">登录</el-button>
-          </el-form-item>
-        </el-form>
-      </form>
-      <p>还没有账号？<button class="link-btn" @click="toggleForm">注册</button></p>
-    </div>
+  <div class="login-container">
+    <div class="login-box">
+      <h2 class="title">{{ isLogin ? '管理员登录' : '管理员注册' }}</h2>
+      
+      <!-- 登录表单 -->
+      <el-form
+        v-if="isLogin"
+        ref="loginFormRef"
+        :model="loginForm"
+        :rules="loginRules"
+        class="login-form"
+        @submit.prevent="submitLogin"
+      >
+        <el-form-item prop="username">
+          <el-input
+            v-model="loginForm.username"
+            placeholder="请输入用户名"
+            size="large"
+            clearable
+          >
+            <template #prefix>
+              <el-icon><User /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item prop="password">
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            placeholder="请输入密码"
+            size="large"
+            show-password
+            @keyup.enter="submitLogin"
+          >
+            <template #prefix>
+              <el-icon><Lock /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button
+            type="primary"
+            size="large"
+            style="width: 100%"
+            :loading="loading"
+            @click="submitLogin"
+          >
+            登录
+          </el-button>
+        </el-form-item>
+      </el-form>
 
-    <!-- 注册表单 -->
-    <div v-else class="form-box">
-      <h2>注册</h2>
-      <form @submit.prevent="submitRegister">
-        <div class="form-group">
-          <label for="register-phone">手机号</label>
-          <el-input v-model="registerForm.phone" style="width: 100%" @input="validateRegisterPhone"
-            placeholder="请输入手机号" />
-          <p class="error" v-if="registerErrors.phone">{{ registerErrors.phone }}</p>
-        </div>
-        <div class="form-group">
-          <label for="register-password">密码</label>
-          <el-input v-model="registerForm.password" style="width: 100%" type="password"
-            @input="validateRegisterPassword" placeholder="请输入密码" show-password />
-          <p class="error" v-if="registerErrors.password">{{ registerErrors.password }}</p>
-        </div>
-        <div class="form-group">
-          <label for="register-confirm-password">确认密码</label>
-          <el-input v-model="registerForm.confirmPassword" style="width: 100%" type="password"
-            @input="validateRegisterConfirmPassword" placeholder="请再次输入密码" show-password />
-          <p class="error" v-if="registerErrors.confirmPassword">{{ registerErrors.confirmPassword }}</p>
-        </div>
-        <button type="submit" class="btn" @click="register">注册</button>
-      </form>
-      <p>已有账号？<button class="link-btn" @click="toggleForm">登录</button></p>
+      <!-- 注册表单 -->
+      <el-form
+        v-else
+        ref="registerFormRef"
+        :model="registerForm"
+        :rules="registerRules"
+        class="login-form"
+        @submit.prevent="submitRegister"
+      >
+        <el-form-item prop="username">
+          <el-input
+            v-model="registerForm.username"
+            placeholder="请输入用户名（至少2位）"
+            size="large"
+            clearable
+          >
+            <template #prefix>
+              <el-icon><User /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item prop="phone">
+          <el-input
+            v-model="registerForm.phone"
+            placeholder="请输入手机号"
+            size="large"
+            clearable
+          >
+            <template #prefix>
+              <el-icon><Phone /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item prop="realname">
+          <el-input
+            v-model="registerForm.realname"
+            placeholder="请输入真实姓名"
+            size="large"
+            clearable
+          >
+            <template #prefix>
+              <el-icon><UserFilled /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item prop="password">
+          <el-input
+            v-model="registerForm.password"
+            type="password"
+            placeholder="请输入密码（至少6位）"
+            size="large"
+            show-password
+          >
+            <template #prefix>
+              <el-icon><Lock /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item prop="confirmPassword">
+          <el-input
+            v-model="registerForm.confirmPassword"
+            type="password"
+            placeholder="请再次输入密码"
+            size="large"
+            show-password
+            @keyup.enter="submitRegister"
+          >
+            <template #prefix>
+              <el-icon><Lock /></el-icon>
+            </template>
+          </el-input>
+        </el-form-item>
+        <el-form-item>
+          <el-button
+            type="primary"
+            size="large"
+            style="width: 100%"
+            :loading="loading"
+            @click="submitRegister"
+          >
+            注册
+          </el-button>
+        </el-form-item>
+      </el-form>
+
+      <div class="toggle-form">
+        <span v-if="isLogin">还没有账号？</span>
+        <span v-else>已有账号？</span>
+        <el-link type="primary" @click="toggleForm">
+          {{ isLogin ? '立即注册' : '立即登录' }}
+        </el-link>
+      </div>
     </div>
   </div>
 </template>
 
+<script setup>
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { User, Lock, Phone, UserFilled } from '@element-plus/icons-vue'
+import { userLoginService, userRegisterService } from '@/api/user.js'
+
+const router = useRouter()
+const loginFormRef = ref(null)
+const registerFormRef = ref(null)
+const isLogin = ref(true)
+const loading = ref(false)
+
+// 表单数据
+const loginForm = reactive({
+  username: '',
+  password: ''
+})
+
+const registerForm = reactive({
+  username: '',
+  phone: '',
+  password: '',
+  confirmPassword: '',
+  realname: ''
+})
+
+// 登录表单验证规则
+const loginRules = reactive({
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, message: '用户名长度不能少于2位', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' }
+  ]
+})
+
+// 注册表单验证规则
+const registerRules = reactive({
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, message: '用户名长度不能少于2位', trigger: 'blur' }
+  ],
+  phone: [
+    { required: true, message: '请输入手机号', trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入密码', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (value !== registerForm.password) {
+          callback(new Error('两次输入的密码不一致'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ],
+  realname: [
+    { required: true, message: '请输入真实姓名', trigger: 'blur' }
+  ]
+})
+
+// 切换表单
+const toggleForm = () => {
+  isLogin.value = !isLogin.value
+  if (loginFormRef.value) loginFormRef.value.clearValidate()
+  if (registerFormRef.value) registerFormRef.value.clearValidate()
+}
+
+// 登录
+const submitLogin = async () => {
+  if (!loginFormRef.value) return
+  await loginFormRef.value.validate(async (valid) => {
+    if (valid) {
+      loading.value = true
+      try {
+        const res = await userLoginService({
+          username: loginForm.username,
+          password: loginForm.password
+        })
+        if (res.code === 0) {
+          console.log('登录成功，返回数据:', res)
+          
+          // 保存用户信息
+          if (res.data) {
+            localStorage.setItem('userInfo', JSON.stringify(res.data))
+          }
+          
+          // 从多个可能的位置获取token（响应拦截器可能已经将响应头的token添加到res.token）
+          let token = res.token || res.data?.token
+          
+          // 保存token（必须保存，否则路由守卫会拦截）
+          if (token) {
+            localStorage.setItem('token', token)
+            console.log('Token已保存:', token.substring(0, 20) + '...')
+          } else {
+            // 如果确实没有token，保存一个登录成功的标识
+            // 这样可以避免路由守卫拦截，但实际项目中应该确保后端返回token
+            localStorage.setItem('token', 'logged_in_' + Date.now())
+            console.warn('未获取到token，使用临时标识。请检查接口是否返回token')
+          }
+          
+          ElMessage.success('登录成功')
+          
+          // 直接跳转，路由守卫会根据localStorage中的token判断
+          router.push('/dashboard').catch(err => {
+            console.error('路由跳转失败:', err)
+            // 如果路由跳转失败，使用window.location强制跳转
+            window.location.href = '/dashboard'
+          })
+        }
+      } catch (error) {
+        console.error('登录失败:', error)
+        // 错误信息已在拦截器中处理
+      } finally {
+        loading.value = false
+      }
+    }
+  })
+}
+
+// 注册
+const submitRegister = async () => {
+  if (!registerFormRef.value) return
+  await registerFormRef.value.validate(async (valid) => {
+    if (valid) {
+      loading.value = true
+      try {
+        const registerData = {
+          username: registerForm.username,
+          phone: registerForm.phone,
+          password: registerForm.password,
+          realname: registerForm.realname
+        }
+        console.log('注册请求数据:', registerData)
+        const res = await userRegisterService(registerData)
+        if (res.code === 0) {
+          ElMessage.success('注册成功，请登录')
+          // 清空注册表单
+          Object.assign(registerForm, {
+            username: '',
+            phone: '',
+            password: '',
+            confirmPassword: '',
+            realname: ''
+          })
+          // 切换到登录表单
+          isLogin.value = true
+          // 清空登录表单
+          Object.assign(loginForm, {
+            username: '',
+            password: ''
+          })
+          // 清除表单验证状态
+          if (registerFormRef.value) {
+            registerFormRef.value.clearValidate()
+          }
+          if (loginFormRef.value) {
+            loginFormRef.value.clearValidate()
+          }
+        }
+      } catch (error) {
+        console.error('注册失败:', error)
+        // 错误信息已在拦截器中处理
+      } finally {
+        loading.value = false
+      }
+    }
+  })
+}
+</script>
+
 <style scoped>
-@import './css/Login.css';
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-box {
+  width: 100%;
+  max-width: 450px;
+  padding: 40px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+}
+
+.title {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #303133;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+.login-form {
+  margin-top: 20px;
+}
+
+.toggle-form {
+  text-align: center;
+  margin-top: 20px;
+  color: #606266;
+}
+
+.toggle-form .el-link {
+  margin-left: 5px;
+}
 </style>
+

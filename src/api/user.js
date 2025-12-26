@@ -1,19 +1,30 @@
 import request from '@/utils/request.js'
 
-export const userRegisterService = (registerData)=>{
-    const params = new URLSearchParams();
-    for (let key in registerData) {
-        params.append(key,registerData[key]);
-    }
-    return request.post('/admin/auth/register',params.values);
-
-}
-
+// 管理员登录
 export const userLoginService = (loginData) => {
-    // 方式1：直接传递对象，axios会自动序列化为JSON
-    return request.post('/admin/auth/login', loginData, {
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    });
+  return request.post('/admin/auth/login', loginData, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
 }
+
+// 管理员注册
+export const userRegisterService = (registerData) => {
+  return request.post('/admin/auth/register', registerData, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+}
+
+// 获取当前管理员信息
+export const getUserInfoService = () => {
+  return request.get('/admin/auth/info')
+}
+
+// 修改密码
+export const updatePasswordService = (data) => {
+  return request.put('/admin/auth/updatePwd', data)
+}
+
